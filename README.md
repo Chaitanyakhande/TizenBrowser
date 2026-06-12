@@ -1,6 +1,6 @@
 # TizenBrowser
 
-TizenBrowser is a remote-first TizenBrew browser start page with a bundled blocker script for site-injection contexts.
+TizenBrowser is a remote-first TizenBrew browser module with a visible TV-remote cursor and built-in blocker script.
 
 ## Install
 
@@ -12,12 +12,13 @@ TizenBrowser is a remote-first TizenBrew browser start page with a bundled block
 
 - This does not run the real uBlock Origin or Privacy Badger browser extensions.
 - TizenBrew does not expose Chrome extension APIs, so filtering is best-effort.
-- The app module shape is used because it is the most reliable way for TizenBrew to recognize the module from GitHub.
+- The visible pointer is injected into browsed pages by the module script. The local app start page only keeps the cursor while you stay on that page.
 
 ## Package Shape
 
 TizenBrew reads the module metadata from `package.json`:
 
-- `packageType`: `app`
+- `packageType`: `mods`
 - `appName`: `TizenBrowser`
-- `appPath`: `app/index.html`
+- `websiteURL`: `https://www.google.com/`
+- `main`: `src/tizenbrowser.js`

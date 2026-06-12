@@ -7,7 +7,9 @@
 
   var BAR_ID = 'tizenbrowser-bar';
   var STYLE_ID = 'tizenbrowser-style';
+  var CURSOR_ID = 'tizenbrowser-cursor';
   var state = { enabled: true, blocked: 0, hidden: 0, cleaned: 0, focus: 2, controls: [] };
+  var cursor = { x: 0, y: 0, step: 34 };
 
   var blocked = [
     '2mdn.net', 'adform.net', 'adnxs.com', 'adsafeprotected.com', 'adsrvr.org',
@@ -165,6 +167,10 @@
       '#tizenbrowser-bar .focus{border-color:#00a8e1!important;box-shadow:0 0 0 4px rgba(0,168,225,.35)!important}',
       '#tizenbrowser-stats{color:#aeb8c6!important;white-space:nowrap!important}',
       '.tizenbrowser-hidden{display:none!important;visibility:hidden!important;opacity:0!important}',
+      '#tizenbrowser-cursor{position:fixed!important;left:50%!important;top:50%!important;z-index:2147483647!important;width:28px!important;height:28px!important;pointer-events:none!important;transform:translate(-4px,-4px)!important;filter:drop-shadow(0 2px 5px rgba(0,0,0,.75))!important}',
+      '#tizenbrowser-cursor:before{content:""!important;position:absolute!important;left:0!important;top:0!important;width:0!important;height:0!important;border-left:0 solid transparent!important;border-right:19px solid transparent!important;border-bottom:28px solid #fff!important;transform:rotate(-38deg)!important;transform-origin:4px 4px!important}',
+      '#tizenbrowser-cursor:after{content:""!important;position:absolute!important;left:5px!important;top:6px!important;width:0!important;height:0!important;border-left:0 solid transparent!important;border-right:12px solid transparent!important;border-bottom:18px solid #00a8e1!important;transform:rotate(-38deg)!important;transform-origin:4px 4px!important}',
+      '#tizenbrowser-cursor.clicking{transform:translate(-4px,-4px) scale(.82)!important}',
       'body{padding-top:64px!important}'
     ].join('\n');
     document.documentElement.appendChild(style);
@@ -190,6 +196,84 @@
     bar.onclick = function (event) { runAction(event.target.getAttribute('data-action')); };
     setFocus(2);
     updateStats();
+  }
+
+  function createCursor() {
+    if (!document.body || document.getElementById(CURSOR_ID)) return;
+
+    var node = document.createElement('div');
+    node.id = CURSOR_ID;
+    document.body.appendChild(node);
+
+    cursor.x = Math.round(window.innerWidth / 2);
+    cursor.y = Math.round(window.innerHeight / 2);
+    updateCursor();
+  }
+
+  function updateCursor() {
+    var node = document.getElementById(CURSOR_ID);
+    if (!node) return;
+
+    cursor.x = Math.max(0, Math.min(window.innerWidth - 4, cursor.x));
+    cursor.y = Math.max(0, Math.min(window.innerHeight - 4, cursor.y));
+    node.style.left = cursor.x + 'px';
+    node.style.top = cursor.y + 'px';
+  }
+
+  function elementAtCursor() {
+    var node = document.getElementById(CURSOR_ID);
+    var display;
+    var element;
+
+    if (!node || !document.elementFromPoint) return null;
+
+    display = node.style.display;
+    node.style.display = 'none';
+    element = document.elementFromPoint(cursor.x, cursor.y);
+    node.style.display = display;
+
+    return element;
+  }
+
+  function dispatchMouse(element, type) {
+    var event;
+
+    if (!element) return;
+
+    try {
+      event = new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: cursor.x,
+        clientY: cursor.y
+      });
+      element.dispatchEvent(event);
+    } catch (error) {
+      event = document.createEvent('MouseEvents');
+      event.initMouseEvent(type, true, true, window, 1, 0, 0, cursor.x, cursor.y, false, false, false, false, 0, null);
+      element.dispatchEvent(event);
+    }
+  }
+
+  function clickCursor() {
+    var node = document.getElementById(CURSOR_ID);
+    var element = elementAtCursor();
+
+    if (node) {
+      node.classList.add('clicking');
+      window.setTimeout(function () { node.classList.remove('clicking'); }, 120);
+    }
+
+    if (!element) return;
+
+    dispatchMouse(element, 'mouseover');
+    dispatchMouse(element, 'mousemove');
+    dispatchMouse(element, 'mousedown');
+    dispatchMouse(element, 'mouseup');
+    dispatchMouse(element, 'click');
+
+    if (element.click) element.click();
   }
 
   function setFocus(index) {
@@ -222,12 +306,15 @@
     document.addEventListener('keydown', function (event) {
       if (!state.controls.length) return;
 
-      if (event.keyCode === 37) setFocus(state.focus - 1);
-      else if (event.keyCode === 39) setFocus(state.focus + 1);
-      else if (event.keyCode === 13) runAction(state.controls[state.focus].getAttribute('data-action'));
+      if (event.keyCode === 37) cursor.x -= cursor.step;
+      else if (event.keyCode === 38) cursor.y -= cursor.step;
+      else if (event.keyCode === 39) cursor.x += cursor.step;
+      else if (event.keyCode === 40) cursor.y += cursor.step;
+      else if (event.keyCode === 13) clickCursor();
       else if (event.keyCode === 10009) history.back();
       else return;
 
+      updateCursor();
       event.preventDefault();
       event.stopPropagation();
     }, true);
@@ -316,6 +403,7 @@
     if (document.body) {
       installStyle();
       createBar();
+      createCursor();
       hideAds(document.body);
       observe();
       installKeys();
@@ -323,6 +411,7 @@
       document.addEventListener('DOMContentLoaded', function () {
         installStyle();
         createBar();
+        createCursor();
         hideAds(document.body);
         observe();
         installKeys();
