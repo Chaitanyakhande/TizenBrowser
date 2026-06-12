@@ -1,0 +1,37 @@
+{
+  "name": "tizenbrowser",
+  "version": "0.1.0",
+  "description": "Remote-first TizenBrew browser module with built-in ad and tracker blocking.",
+  "packageType": "mods",
+  "appName": "TizenBrowser",
+  "websiteURL": "https://www.google.com/",
+  "main": "src/tizenbrowser.js",
+  "evaluateScriptOnDocumentStart": false,
+  "keys": [
+    "MediaPlayPause",
+    "MediaPlay",
+    "MediaPause",
+    "MediaStop",
+    "MediaFastForward",
+    "MediaRewind",
+    "MediaTrackNext",
+    "MediaTrackPrevious"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "package.json"
+  ],
+  "keywords": [
+    "tizen",
+    "tizen-tv",
+    "tizenbrew",
+    "browser",
+    "adblock",
+    "privacy"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "check": "node --check src/tizenbrowser.js"
+  }
+}
